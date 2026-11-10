@@ -70,6 +70,7 @@ She gathers evidence first, runs Aquinas when meaning could change the plan, and
 | [Earned Presence Kondo](skills/earned-presence-kondo) | Something may not earn its cost, or you want a radical rebuild. | A keep-or-remove judgment, or destroy, preserve, and rebuild, with evidence and re-checks. |
 | [UI Attention Ciceron](skills/ui-attention-ciceron) | UI work reaches final validation, or a screen needs review. | An attention ranking, language and goal fit, severity, and the smallest correction. |
 | [Communication Review Ciceron](skills/communication-review-ciceron) | A message, proposal, or product copy must land with its audience. | Likely uptake, friction points, and a better version. |
+| [Banco Animaciones Aristoteles](skills/banco-animaciones-aristoteles) | You want an animation, motion graphic, explainer, or 3D scene built in code, or a prompt to start one. | Matching prompts from a bank of 703 classified Opus 5.5 prompts, an adapted prompt, or a verified HTML animation. |
 
 Each specialist answers a different question, which is why they stay separate. `code-review` from Claude Code looks for bugs in a diff, while Hegel asks whether the change has the right shape; UI Attention Ciceron makes no eye-tracking claim, and ranks likely attention from observable evidence.
 
@@ -103,4 +104,5 @@ The names are memory handles for practical engineering habits:
 | Wittgenstein | Understand meaning through actual use in the repo before inventing new code patterns. |
 | Hegel | Review changed code by preserving what works, transforming what no longer fits, and removing what is obsolete. |
 | Kondo | Ask whether each surviving thing earns the cost of existing before adding more structure. |
+| Aristotle | Sort a heap of examples by what each one is, what it is about, how it looks, and what state it is in, so the right one can be found. |
 | Cicero | Judge communication and interfaces by how they direct attention and affect the audience. The UI review borrows its two-pass method from Kahneman. |

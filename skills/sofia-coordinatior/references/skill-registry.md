@@ -20,6 +20,7 @@ A skill absent from this file can still be used. Read its description and place 
 - `pattern-code-wittgenstein` runs before code exists; `synthesis-code-hegel` runs after.
 - `earned-presence-kondo` is independent, and also serves as a bridge from `ui-attention-ciceron` and `synthesis-code-hegel` when the likely fix is to remove something.
 - `ui-attention-ciceron` judges a rendered screen; `communication-review-ciceron` judges a message.
+- `banco-animaciones-aristoteles` finds and adapts a reference prompt and can build the animation; it does not judge whether the motion serves the screen, which stays with `ui-attention-ciceron`.
 
 ## Handoff Orders
 
@@ -30,6 +31,7 @@ Use the shortest sequence that covers the task.
 - Repository plan: `grill-me-aquinas`, `audit-plan-descartes`, `pattern-code-wittgenstein` when precedent matters, then the final plan.
 - UI implementation: plan, implement, rendered evidence, `ui-attention-ciceron`, `earned-presence-kondo` if competing elements may need demotion or removal, then fixes.
 - Academic submission: `auditar-pec`, then `communication-review-ciceron` only if a message to teaching staff is needed.
+- Animation: `banco-animaciones-aristoteles` to choose and adapt a prompt, `pattern-code-wittgenstein` when the animation lands in an existing codebase, build and render, then `ui-attention-ciceron` when it sits on a product screen and `communication-review-ciceron` when its copy must persuade or explain.
 - Communication: draft or rewrite, `communication-review-ciceron`, revised message.
 - Subtractive review: `earned-presence-kondo`, then a specialist only if rendered UI evidence, real diff evidence, or pattern discovery is needed.
 - Radical rebuild: `grill-me-aquinas` for what must survive, `earned-presence-kondo` for destroy/preserve/rebuild, then `pattern-code-wittgenstein` or implementation.

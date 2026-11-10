@@ -6,7 +6,7 @@ Practical use: Use when work spans more than one concern or it is unclear which 
 
 ## What it does
 
-- Routes skill changes, planning, implementation guidance, post-diff review, UI validation, and communication review.
+- Routes skill changes, planning, implementation guidance, post-diff review, UI validation, communication review, and animation work.
 - Keeps each specialist's responsibility separate.
 - Passes `exploratory` or `bold-by-default` posture when users want to explore limits or work toward a final-shape design.
 - Runs Aquinas before planning when meaning could change the plan, then gives plan trust to Descartes, asking about an audit only when an unresolved assumption could change the plan.
