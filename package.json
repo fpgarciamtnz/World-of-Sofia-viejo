@@ -12,7 +12,11 @@
     "new:skill": "node ./scripts/new-skill.mjs",
     "install:skills": "node ./scripts/install-skills.mjs",
     "install:skill": "node ./scripts/install-skills.mjs --skill",
-    "eval:routing": "node ./evals/onmax-routing/run.mjs"
+    "eval:routing": "node ./evals/onmax-routing/run.mjs",
+    "onmax:reference": "node ./evals/onmax-routing/run.mjs reference",
+    "onmax:install": "node ./evals/onmax-routing/run.mjs install",
+    "onmax:uninstall": "node ./evals/onmax-routing/run.mjs uninstall",
+    "onmax:usage": "node ./evals/onmax-routing/run.mjs usage"
   },
   "dependencies": {
     "zod": "^4.1.12"

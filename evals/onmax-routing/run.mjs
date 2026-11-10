@@ -6,10 +6,16 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  REFERENCE_FILE,
+  REGISTRY_POINTER,
   SOFIA,
   VARIANTS,
   addRegistryPointer,
   buildRegistry,
+  countSkillUse,
+  isPersonal,
+  listingDescription,
+  removeRegistryPointer,
   cacheRoot,
   evalRoot,
   keywordDescription,
@@ -57,6 +63,12 @@ Commands:
   probe              Ask the model which listed skills lost their descriptions, per variant
   run                Run the routing cases and score them
 
+Use the onmax skills day to day:
+  reference          Write Sofia's references/external-skills.md (keywords, personal skills left out)
+  install [--dry-run]  Install the non-personal onmax skills into ~/.claude/skills with short listing descriptions
+  uninstall          Remove the onmax skills that install put there
+  usage [--all]      Count which skills were used since install (--all: all transcripts)
+
 Options for probe and run:
   --variant a,b      Variants to run (default: all): ${Object.keys(VARIANTS).join(", ")}
   --case a,b         Case ids to run (default: all)
@@ -89,6 +101,7 @@ function parseArgs(argv) {
     else if (arg === "--budget") options.budget = Number(next());
     else if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--latest") options.latest = true;
+    else if (arg === "--all") options.all = true;
     else throw new Error(`Unknown option ${arg}\n\n${usage()}`);
   }
   for (const variant of options.variants ?? []) {
@@ -155,10 +168,11 @@ async function loadSofiaFamily() {
   return skills;
 }
 
-async function registryText(mode, upstream, source) {
+async function registryText(mode, upstream, source, { production = false } = {}) {
   const annotations = await readJson(path.join(evalRoot, "annotations.json"));
-  const template = await fs.readFile(path.join(evalRoot, "registry-template.md"), "utf8");
-  return buildRegistry({ template, annotations, upstream, mode, source: `${source.repo.replace(/\.git$/, "")} at ${source.commit.slice(0, 7)}` });
+  const template = await fs.readFile(path.join(evalRoot, production ? "reference-template.md" : "registry-template.md"), "utf8");
+  const sourceLabel = `${source.repo.replace(/\.git$/, "")} at ${source.commit.slice(0, 7)}`;
+  return buildRegistry({ template, annotations, upstream, mode, source: sourceLabel, skipPersonal: production });
 }
 
 async function build() {
@@ -237,10 +251,13 @@ async function buildSandbox(variantName, upstream, source) {
     await fs.rm(path.join(skillsDir, name), { recursive: true, force: true });
     await copySkill(skill.dir, path.join(skillsDir, name));
   }
+  // Every variant starts from Sofia without her shipped reference, then adds its own.
+  const sofiaDir = path.join(skillsDir, SOFIA);
+  const skillFile = path.join(sofiaDir, "SKILL.md");
+  await fs.rm(path.join(sofiaDir, "references", REFERENCE_FILE), { force: true });
+  await fs.writeFile(skillFile, removeRegistryPointer(await fs.readFile(skillFile, "utf8")));
   if (variant.registry) {
-    const sofiaDir = path.join(skillsDir, SOFIA);
-    await fs.writeFile(path.join(sofiaDir, "references", "external-skills.md"), await registryText(variant.registry, upstream, source));
-    const skillFile = path.join(sofiaDir, "SKILL.md");
+    await fs.writeFile(path.join(sofiaDir, "references", REFERENCE_FILE), await registryText(variant.registry, upstream, source));
     await fs.writeFile(skillFile, addRegistryPointer(await fs.readFile(skillFile, "utf8")));
   }
   return { config, skillsDir, workspace };
@@ -395,6 +412,133 @@ function summaryMarkdown(source, cases, summaries, results) {
   return `${lines.join("\n")}\n`;
 }
 
+function configDir() {
+  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude");
+}
+
+function manifestFile() {
+  return path.join(configDir(), ".backups", "world-of-sofia", "onmax-installed.json");
+}
+
+async function writeReference() {
+  const { source, skills } = await loadUpstream();
+  const file = path.join(projectRoot, "skills", SOFIA, "references", REFERENCE_FILE);
+  const text = await registryText("keywords", skills, source, { production: true });
+  await fs.writeFile(file, text);
+  console.log(`${path.relative(projectRoot, file)}: ${text.length} chars`);
+  const skill = await fs.readFile(path.join(projectRoot, "skills", SOFIA, "SKILL.md"), "utf8");
+  if (!skill.includes("references/external-skills.md")) {
+    console.log(`Add a pointer to it in ${SOFIA}/SKILL.md; the eval used: ${REGISTRY_POINTER}`);
+  }
+}
+
+async function install({ dryRun }) {
+  const { source, skills: upstream } = await loadUpstream();
+  const annotations = await readJson(path.join(evalRoot, "annotations.json"));
+  const sofia = await loadSofiaFamily();
+  const target = path.join(configDir(), "skills");
+  const backups = path.join(configDir(), ".backups", "world-of-sofia");
+  const previous = await readJson(manifestFile()).catch(() => ({ skills: [] }));
+  const installed = [];
+  const skipped = [];
+
+  for (const [name, skill] of upstream) {
+    const note = annotations.skills[name];
+    if (isPersonal(note) || sofia.has(name)) {
+      skipped.push(name);
+      continue;
+    }
+    if (!note) {
+      throw new Error(`${name} has no entry in annotations.json; add keywords, then run build and reference.`);
+    }
+    const destination = path.join(target, name);
+    const ours = previous.skills.includes(name);
+    if (dryRun) {
+      console.log(`[dry-run] ${(await exists(destination)) && !ours ? "back up and replace" : "install"} ${name}`);
+      installed.push(name);
+      continue;
+    }
+    if (await exists(destination)) {
+      if (!ours) {
+        await fs.mkdir(backups, { recursive: true });
+        await fs.rename(destination, path.join(backups, `${name}-${stamp()}`));
+      } else {
+        await fs.rm(destination, { recursive: true, force: true });
+      }
+    }
+    await copySkill(skill.dir, destination);
+    const file = path.join(destination, "SKILL.md");
+    await fs.writeFile(file, rewriteDescription(await fs.readFile(file, "utf8"), listingDescription(skill.description, note)));
+    installed.push(name);
+  }
+
+  // A skill dropped from the install set since last time is removed too.
+  for (const name of previous.skills.filter((n) => !installed.includes(n))) {
+    if (!dryRun) await fs.rm(path.join(target, name), { recursive: true, force: true });
+    console.log(`${dryRun ? "[dry-run] " : ""}removed ${name}`);
+  }
+  if (!dryRun) {
+    await fs.mkdir(path.dirname(manifestFile()), { recursive: true });
+    const manifest = { source, installedAt: previous.installedAt ?? new Date().toISOString(), updatedAt: new Date().toISOString(), skills: installed };
+    await fs.writeFile(manifestFile(), `${JSON.stringify(manifest, null, 2)}\n`);
+  }
+  console.log(`${dryRun ? "Would install" : "Installed"} ${installed.length} onmax skills into ${target} at ${source.commit.slice(0, 7)}.`);
+  console.log(`Left out: ${skipped.join(", ")}`);
+  console.log(`Also run \`npm run install:skill -- ${SOFIA}\` so Sofia has the external-skills reference.`);
+  return 0;
+}
+
+async function uninstall() {
+  const manifest = await readJson(manifestFile()).catch(() => null);
+  if (!manifest) {
+    console.log("No onmax install found.");
+    return 0;
+  }
+  for (const name of manifest.skills) {
+    await fs.rm(path.join(configDir(), "skills", name), { recursive: true, force: true });
+  }
+  await fs.rm(manifestFile());
+  console.log(`Removed ${manifest.skills.length} onmax skills. Backups of anything they replaced are in ${path.dirname(manifestFile())}.`);
+  return 0;
+}
+
+async function transcripts(dir) {
+  const files = [];
+  for (const entry of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) files.push(...(await transcripts(full)));
+    else if (entry.name.endsWith(".jsonl")) files.push(full);
+  }
+  return files;
+}
+
+async function skillUsage({ all }) {
+  const manifest = await readJson(manifestFile()).catch(() => null);
+  const since = all ? "" : manifest?.installedAt ?? "";
+  const onmax = new Set(manifest?.skills ?? []);
+  const family = new Set((await loadSofiaFamily()).keys());
+  const totals = new Map();
+  for (const file of await transcripts(path.join(configDir(), "projects"))) {
+    for (const [name, entry] of countSkillUse(await fs.readFile(file, "utf8"), since)) {
+      const total = totals.get(name) ?? { model: 0, user: 0, last: "" };
+      total.model += entry.model;
+      total.user += entry.user;
+      total.last = entry.last > total.last ? entry.last : total.last;
+      totals.set(name, total);
+    }
+  }
+  const group = (name) => (family.has(name) ? "sofia" : onmax.has(name) ? "onmax" : "other");
+  console.log(since ? `Skill use since ${since.slice(0, 10)} (install date)` : "Skill use in all transcripts");
+  console.log("group  model  /typed  last used   skill");
+  const rows = [...totals].sort((a, b) => b[1].model + b[1].user - (a[1].model + a[1].user));
+  for (const [name, t] of rows) {
+    console.log(`${group(name).padEnd(6)} ${String(t.model).padStart(5)}  ${String(t.user).padStart(6)}  ${t.last.slice(0, 10).padEnd(10)}  ${name}`);
+  }
+  const unused = [...onmax].filter((name) => !totals.has(name));
+  if (manifest) console.log(`\nonmax skills not used yet (${unused.length}/${onmax.size}): ${unused.join(", ")}`);
+  return 0;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   switch (options.command) {
@@ -413,6 +557,15 @@ async function main() {
       return 0;
     case "run":
       return run(options);
+    case "reference":
+      await writeReference();
+      return 0;
+    case "install":
+      return install(options);
+    case "uninstall":
+      return uninstall();
+    case "usage":
+      return skillUsage(options);
     default:
       console.log(usage());
       return options.command ? 1 : 0;

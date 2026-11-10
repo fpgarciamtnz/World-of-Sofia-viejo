@@ -28,6 +28,8 @@ Call a specialist with the Skill tool, using the name as the session lists it, w
 
 Read [references/skill-registry.md](references/skill-registry.md) when choosing an order for a multi-step workflow, or when Claude Code's built-in skills might overlap a specialist.
 
+Read [references/external-skills.md](references/external-skills.md) before routing to or suggesting a skill outside the Sofia family. It maps the onmax skills, when installed, to keywords and to the specialists they overlap, and names those only the user can start, such as `/handoff` and `/grilling`.
+
 ## Planning
 
 When a plan is the deliverable, gather evidence from the repository before asking the user anything inspection can answer. If meaning or scope could change the plan, run `grill-me-aquinas` first as a compact observer, then give its findings to `audit-plan-descartes`. Aquinas owns meaning; Descartes owns whether the plan can be trusted.

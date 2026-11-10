@@ -14,7 +14,8 @@
   "installCommand": "npm run install:skill -- sofia-coordinatior",
   "references": [
     "references/skill-registry.md",
-    "references/developer-trace-contract.md"
+    "references/developer-trace-contract.md",
+    "references/external-skills.md"
   ],
   "version": "0.2.0",
   "developerTrace": {

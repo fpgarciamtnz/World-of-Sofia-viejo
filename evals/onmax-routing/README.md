@@ -17,6 +17,19 @@ npm run eval:routing -- build          # regenerate variants/ after editing anno
 
 `fetch --latest` moves the pin to upstream `main`; `static` then lists any new skill that needs keywords. Results go to `results/<timestamp>/` as `summary.md` and `results.json`; raw transcripts are kept locally under `raw/`, which git ignores.
 
+## Use it day to day
+
+```sh
+npm run install:skills               # the Sofia family, including her external-skills reference
+npm run onmax:install                # 45 onmax skills into ~/.claude/skills (personal ones left out)
+npm run onmax:usage                  # which skills sessions have used since the install
+npm run onmax:uninstall              # remove only what onmax:install put there
+```
+
+The install leaves out the 8 skills flagged `personal` in `annotations.json`, because they encode Maxi's machines, accounts, or voice. Each installed skill lists its keywords instead of its upstream description whenever that is shorter. Skills flagged `ambient` or `trigger-word` keep their upstream wording, since that wording is the trigger. That keeps the always-loaded listing under Claude Code's budget, about 5k characters instead of 23k, and the upstream files are otherwise untouched. A skill that already existed under the same name is backed up to `~/.claude/.backups/world-of-sofia/`.
+
+Sofia's `references/external-skills.md` is generated: edit `annotations.json` or `reference-template.md`, then run `npm run onmax:reference`. After moving the pin with `fetch --latest`, run `static` to find new skills that need keywords.
+
 ## Variants
 
 | Variant | Sofia's reference | Onmax skills in the always-loaded listing |

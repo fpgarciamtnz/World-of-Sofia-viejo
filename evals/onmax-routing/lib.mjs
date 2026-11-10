@@ -18,6 +18,8 @@ export const VARIANTS = {
 
 export const SOFIA = "sofia-coordinatior";
 const REGISTRY_ANCHOR = "Read [references/skill-registry.md](references/skill-registry.md)";
+export const REFERENCE_FILE = "external-skills.md";
+const PRODUCTION_POINTER_PREFIX = "Read [references/external-skills.md]";
 export const REGISTRY_POINTER =
   "Read [references/external-skills.md](references/external-skills.md) when the task may belong to an installed skill outside the Sofia family, or when one of those skills overlaps a specialist.";
 
@@ -80,21 +82,45 @@ export function addRegistryPointer(sofiaSkill) {
   return lines.join("\n");
 }
 
+/** Removes the production external-skills pointer, so each eval variant starts from the same Sofia. */
+export function removeRegistryPointer(sofiaSkill) {
+  return sofiaSkill
+    .split("\n")
+    .filter((line, index, lines) => !line.startsWith(PRODUCTION_POINTER_PREFIX) && !(line === "" && lines[index + 1]?.startsWith(PRODUCTION_POINTER_PREFIX)))
+    .join("\n");
+}
+
+export function isPersonal(note) {
+  return Boolean(note?.flags?.includes("personal"));
+}
+
+/**
+ * The description an installed onmax skill shows in the always-loaded listing: keywords when they
+ * are shorter, and the upstream text for skills whose wording carries the trigger itself.
+ */
+export function listingDescription(upstreamDescription, note) {
+  if (!note || note.flags?.some((flag) => flag === "ambient" || flag === "trigger-word")) {
+    return upstreamDescription;
+  }
+  const keywords = keywordDescription(note.keywords);
+  return keywords.length < upstreamDescription.length ? keywords : upstreamDescription;
+}
+
 /**
  * Builds Sofia's external-skills reference. Both modes share every line except the
  * per-skill trigger text, so a difference in results comes from that text alone.
  */
-export function buildRegistry({ template, annotations, upstream, mode, source }) {
+export function buildRegistry({ template, annotations, upstream, mode, source, skipPersonal = false }) {
   const sections = Object.entries(annotations.areas).map(([area, title]) => {
     const rows = Object.entries(annotations.skills)
-      .filter(([, note]) => note.area === area)
+      .filter(([, note]) => note.area === area && !(skipPersonal && isPersonal(note)))
       .map(([name, note]) => {
         const flags = note.flags?.length ? ` (${note.flags.join(", ")})` : "";
         const text = mode === "descriptions" ? upstream.get(name).description : note.keywords.join("; ");
         return `- \`${name}\`${flags}: ${text}`;
       });
-    return `### ${title}\n\n${rows.join("\n")}`;
-  });
+    return rows.length ? `### ${title}\n\n${rows.join("\n")}` : null;
+  }).filter(Boolean);
   return template.replace("{{SOURCE}}", source).replace("{{SKILLS}}", sections.join("\n\n"));
 }
 
@@ -224,4 +250,45 @@ export function summarize(variant, results) {
     costUsd: sum("costUsd"),
     avgDurationMs: total ? sum("durationMs") / total : 0
   };
+}
+
+/** Counts skill use in Claude Code transcripts: Skill tool calls by the model and /skill commands typed by the user. */
+export function countSkillUse(jsonl, since) {
+  const counts = new Map();
+  const bump = (name, key) => {
+    const entry = counts.get(name) ?? { model: 0, user: 0, last: "" };
+    entry[key] += 1;
+    counts.set(name, entry);
+    return entry;
+  };
+  for (const line of jsonl.split("\n")) {
+    if (!line.includes("Skill") && !line.includes("<command-name>")) {
+      continue;
+    }
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (since && (event.timestamp ?? "") < since) {
+      continue;
+    }
+    const content = event.message?.content;
+    if (event.type === "assistant" && Array.isArray(content)) {
+      for (const block of content) {
+        if (block.type === "tool_use" && block.name === "Skill" && block.input?.skill) {
+          const entry = bump(normalizeSkill(block.input.skill), "model");
+          entry.last = event.timestamp > entry.last ? event.timestamp : entry.last;
+        }
+      }
+    } else if (event.type === "user" && typeof content === "string") {
+      const match = content.match(/<command-name>\/?([^<\s]+)<\/command-name>/);
+      if (match) {
+        const entry = bump(normalizeSkill(match[1]), "user");
+        entry.last = event.timestamp > entry.last ? event.timestamp : entry.last;
+      }
+    }
+  }
+  return counts;
 }

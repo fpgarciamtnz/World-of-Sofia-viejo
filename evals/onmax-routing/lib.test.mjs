@@ -3,10 +3,13 @@ import {
   REGISTRY_POINTER,
   addRegistryPointer,
   buildRegistry,
+  countSkillUse,
+  listingDescription,
   normalizeSkill,
   parseRoute,
   parseSkillFrontmatter,
   parseStream,
+  removeRegistryPointer,
   rewriteDescription,
   scoreCase
 } from "./lib.mjs";
@@ -62,5 +65,29 @@ describe("onmax routing eval helpers", () => {
     expect(score.pass).toBe(false);
     expect(score.failures).toEqual(["forbidden: write-like-maxi"]);
     expect(scoreCase({ none: true }, { ...parsed, declared: [], invoked: [] }).pass).toBe(true);
+  });
+
+  it("keeps the shorter listing description, and upstream wording for ambient and trigger-word skills", () => {
+    const long = "x".repeat(200);
+    expect(listingDescription(long, { keywords: ["a", "b"] })).toBe("Use for: a; b.");
+    expect(listingDescription("Short.", { keywords: ["a long keyword list"] })).toBe("Short.");
+    expect(listingDescription(long, { flags: ["ambient"], keywords: ["a"] })).toBe(long);
+    expect(listingDescription(long, { flags: ["trigger-word"], keywords: ["a"] })).toBe(long);
+  });
+
+  it("removes the shipped external-skills pointer and its blank line", () => {
+    const sofia = "a\n\nRead [references/external-skills.md](references/external-skills.md) before...\nb";
+    expect(removeRegistryPointer(sofia)).toBe("a\nb");
+  });
+
+  it("counts Skill calls and typed /skill commands after a date", () => {
+    const jsonl = [
+      JSON.stringify({ type: "assistant", timestamp: "2026-11-09T00:00:00Z", message: { content: [{ type: "tool_use", name: "Skill", input: { skill: "repro" } }] } }),
+      JSON.stringify({ type: "assistant", timestamp: "2026-11-11T00:00:00Z", message: { content: [{ type: "tool_use", name: "Skill", input: { skill: "repro" } }] } }),
+      JSON.stringify({ type: "user", timestamp: "2026-11-12T00:00:00Z", message: { role: "user", content: "<command-message>handoff</command-message>\n<command-name>/handoff</command-name>" } })
+    ].join("\n");
+    const counts = countSkillUse(jsonl, "2026-11-10");
+    expect(counts.get("repro")).toEqual({ model: 1, user: 0, last: "2026-11-11T00:00:00Z" });
+    expect(counts.get("handoff")).toMatchObject({ model: 0, user: 1 });
   });
 });
