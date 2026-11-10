@@ -9,7 +9,8 @@ export default [
       "**/dist/**",
       "**/coverage/**",
       "**/test-results/**",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/.cache/**"
     ]
   },
   js.configs.recommended,
