@@ -99,7 +99,6 @@ npm run new:skill -- "Stoic Triage" "Epictetus"   # create a skill and link it
 - `scripts`: skill creation, validation, and linking.
 - `templates/skill`: source template for new skills.
 - `docs`: authoring guidelines, decisions, evaluations, and the research behind the skills.
-- `.agents/skills`: skills vendored from `mattpocock/skills`, tracked by `skills-lock.json`. Claude Code does not load them.
 
 The hard rule is isolation: each skill carries its own manifest, instructions, README, and references, so it works when copied out of its folder.
 
