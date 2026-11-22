@@ -236,8 +236,9 @@ export function explainGitError(output) {
 export function runGit(repoRoot, args, timeout = 5_000) {
   const result = spawnSync("git", ["-C", repoRoot, ...args], {
     encoding: "utf8",
-    // Never wait on a credential prompt nobody will answer.
-    env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: "never" },
+    // Never wait on a credential prompt nobody will answer. LC_ALL=C keeps Git's messages in
+    // English, which GIT_ERRORS matches, whatever language the machine uses.
+    env: { ...process.env, GIT_TERMINAL_PROMPT: "0", GCM_INTERACTIVE: "never", LC_ALL: "C" },
     timeout,
     windowsHide: true
   });

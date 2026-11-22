@@ -25,6 +25,7 @@ describe("skill validation helpers", () => {
     expect(skillsData.skills.map((skill) => skill.slug).sort()).toEqual([
       "audit-plan-descartes",
       "auditar-pec",
+      "banco-animaciones-aristoteles",
       "boil-the-ocean-magallanes",
       "communication-review-ciceron",
       "earned-presence-kondo",

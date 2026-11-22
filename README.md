@@ -1,6 +1,6 @@
 # World of Sofia
 
-World of Sofia is a small family of skills for Claude Code. Each skill does its own job from start to finish: take a huge request on at its full size and reach the destination you describe by whatever route stays inside the limits, audit a plan, clarify what a request means, judge code before and after a change, decide what earns its place, review how a message or a screen lands, or audit an academic submission.
+World of Sofia is a small family of skills for Claude Code. Each skill does its own job from start to finish: take a huge request on at its full size and reach the destination you describe by whatever route stays inside the limits, audit a plan, clarify what a request means, judge code before and after a change, decide what earns its place, review how a message or a screen lands, audit an academic submission, or find and adapt a prompt for an animation made in code.
 
 There is no router. Claude Code already loads a skill whose description matches the request, so a skill that only sends work elsewhere adds a step without adding judgment. Skills that work together say so in their own instructions, and the main pair is Boil the Ocean Magallanes with Audit Plan Descartes. The skills are written for Claude Opus in T3 Code; see [the authoring guidelines](docs/skill-authoring-guidelines.md) and [ADR 0004](docs/adr/0004-few-coordinated-skills.md).
 
@@ -70,6 +70,8 @@ Call a skill by name, such as `/audit-plan-descartes`, or describe the work and 
 
 **Audience.** Communication Review Ciceron reviews how a message or a rendered screen lands. Auditar PEC audits an academic submission against its brief and rubric. It always loads Grill Me Aquinas to settle what the brief asks, then Audit Plan Descartes to separate facts from assumptions, and its report lists every concept it checked.
 
+**Animation.** Banco Animaciones Aristoteles keeps 703 prompts that people shared after making animations in code with Opus, classed by format, theme, style, technique, output, and state. It finds the prompts that fit a request, adapts the chosen one, and, when asked, builds the animation as one HTML file and checks it, crediting the prompt's author.
+
 ## Skills
 
 | Skill | Call when | Produces |
@@ -81,6 +83,7 @@ Call a skill by name, such as `/audit-plan-descartes`, or describe the work and 
 | [Synthesis Code Hegel](skills/synthesis-code-hegel) | Code is about to be written and precedent matters, or code has changed and needs judgment before merge. | `reuse`, `extend`, `extract`, `copy carefully`, or `create new`; or leave, rename, extract, merge, split, inline, deprecate, or delete. |
 | [Earned Presence Kondo](skills/earned-presence-kondo) | Something may not earn its cost, or you want a radical rebuild. | A keep-or-remove judgment, or destroy, preserve, and rebuild, with evidence and re-checks. |
 | [Communication Review Ciceron](skills/communication-review-ciceron) | A message, proposal, or copy must land with its audience, or UI work reaches final validation or a screen needs review. | Likely uptake, friction, and a better version; or an attention ranking, severity, and the smallest correction. |
+| [Banco Animaciones Aristoteles](skills/banco-animaciones-aristoteles) | You want to make an animation, motion graphic, explainer, or 3D scene in code, or you are looking for a prompt or ideas for one. | Two or three candidate prompts, the chosen prompt adapted, or the animation as a checked HTML file, with its author credited. |
 | [Auditar PEC](skills/auditar-pec) | You type `/auditar-pec` to check a PEC, theoretical framework, or bibliography against its brief and rubric before delivery; Claude never starts it alone. It stops and asks if the rubric is missing. | The Aquinas and Descartes concepts it checked, requirement and rubric status, reference and citation checks, an evidence ledger, and whether sources support the claims. |
 
 Each skill answers a different question. `code-review` from Claude Code looks for bugs in a diff, while Hegel asks whether the change has the right shape, and Ciceron makes no eye-tracking claim, ranking likely attention from observable evidence.
@@ -115,4 +118,5 @@ The names are memory handles for practical engineering habits:
 | Ortega | Tell the ideas we hold and state from the beliefs we stand on without noticing, and remember that every saying says less than it means and more than it intends. |
 | Hegel | Set new code against what already exists, then preserve what works, transform what no longer fits, and remove what is obsolete. It judges resemblance by use, as Wittgenstein taught: call sites and tests outweigh shared names. |
 | Kondo | Ask whether each surviving thing earns the cost of existing before adding more structure. |
+| Aristotle | Sort a heap of things by asking of each what it is, what it is about, how it looks, what it is made with, and what state it is in, so that it can be found by its class and not by luck. |
 | Cicero | Judge communication and interfaces by how they direct attention and affect the audience. The UI review borrows its two-pass method from Kahneman. |

@@ -37,6 +37,7 @@ The table records the 2026-09-14 inventory. The 2026-11-06 migration in the log 
 | 2026-11-17 | Claude | `audit-plan-descartes` | Added a use: right after a drop is created on Drop, read it back and verify it against the rules of the skill that made it, since Drop's skills each set their own. The method is in `references/drop-verification.md`. |
 | 2026-11-19 | Claude | `auditar-pec` | Runs only with `/auditar-pec`. It always loads Aquinas, then Descartes, and its report lists every concept it applied in a "Conceptos revisados" section; see `docs/adr/0005-auditar-pec-explicit-concepts.md`. Not yet run on a real PEC. |
 | 2026-11-20 | Claude | `implicit-explicit-ortega` | Added: separates what material says from what it stands on without saying and what it conveys without meaning to, after Ortega's ideas and beliefs. Eight skills remain; see `docs/adr/0006-implicit-explicit-ortega.md`. Not yet tried on a realistic prompt. |
+| 2026-11-22 | Claude | `banco-animaciones-aristoteles` | Added from the retired second clone, where it had stayed on a local branch: 703 animation prompts classed by Aristotle's categories, with a search script. Its section naming retired skills was dropped. Nine skills remain; see `docs/adr/0008-banco-animaciones-aristoteles.md`. |
 
 ## Next review checklist
 
